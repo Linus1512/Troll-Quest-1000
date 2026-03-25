@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Troll Quest 1000</title>
+    <style>
+        body { background: #111; color: white; font-family: sans-serif; margin: 0; text-align: center; overflow: hidden; height: 100vh; }
+        #menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 20px; overflow-y: auto; height: 80vh; background: #000; }
+        .level-btn { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: #333; border-radius: 10px; border: 2px solid #444; font-weight: bold; }
+        .unlocked { background: #2ed573; color: black; box-shadow: 0 0 10px #2ed573; cursor: pointer; }
+        .played { background: #1e90ff; color: white; cursor: pointer; }
+        .locked { opacity: 0.2; }
+        #game-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .target { padding: 15px; background: red; color: white; border: none; border-radius: 10px; position: absolute; font-weight: bold; touch-action: none; min-width: 100px; }
+        #hint { color: #555; margin-top: 20px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div id="lobby">
+        <h1 style="color:gold">TROLL QUEST 1000</h1>
+        <div id="menu"></div>
+    </div>
+
+    <div id="game-screen">
+        <h2 id="lvl-title">Level</h2>
+        <p id="instr">Finde den Sieg!</p>
+        <div id="stage" style="width:100%; height:60%; position:relative;"></div>
+        <button onclick="goBack()" style="background:none; border:1px solid #333; color:#333; margin-top:50px;">Menü</button>
+    </div>
+
+    <script>
+        let unlocked = 1;
+        const menu = document.getElementById('menu');
+        const stage = document.getElementById('stage');
+        
+        function renderMenu() {
+            menu.innerHTML = "";
+            for(let i=1; i<=1000; i++) {
+                const btn = document.createElement('div');
+                btn.className = 'level-btn ' + (i < unlocked ? 'played' : (i === unlocked ? 'unlocked' : 'locked'));
+                btn.innerText = i;
+                btn.onclick = () => { if(i <= unlocked) startLevel(i); };
+                menu.appendChild(btn);
+            }
+        }
+
+        function startLevel(lvl) {
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+            document.getElementById('lvl-title').innerText = "Level " + lvl;
+            stage.innerHTML = "";
+            
+            if(lvl === 1) {
+                document.getElementById('instr').innerText = "Klick den Button!";
+                createBtn("KLICK", (b) => { b.style.left="10%"; b.onclick=()=>win(1); });
+            } 
+            else if(lvl === 2) {
+                document.getElementById('instr').innerText = "Warte auf 100%...";
+                stage.innerHTML = "<h1 id='p'>0%</h1>";
+                let p = 0;
+                let iv = setInterval(() => { 
+                    p++; document.getElementById('p').innerText = p+"%"; 
+                    if(p === 99) { clearInterval(iv); document.getElementById('p').onclick=()=>win(2); }
+                }, 30);
+            }
+            else if(lvl === 3) {
+                document.getElementById('instr').innerText = "Nichts berühren!";
+                createBtn("SIEG", () => { alert("Verloren! Du hast ihn berührt."); startLevel(3); });
+                setTimeout(() => { if(document.getElementById('game-screen').style.display === 'flex') win(3); }, 4000);
+            }
+            else if(lvl === 4) {
+                document.getElementById('instr').innerText = "Finde den grünen Button!";
+                for(let i=0; i<30; i++) {
+                    let b = createBtn("HIER", () => { alert("Falsch!"); startLevel(4); });
+                    b.style.left = Math.random()*70+"%"; b.style.top = Math.random()*80+"%";
+                }
+                let real = createBtn("HIER", () => win(4));
+                real.style.background = "darkred"; // Minimal dunkler
+            }
+            else if(lvl === 5) {
+                document.getElementById('instr').innerText = "Gib das Passwort ein: 'PASSWORT'";
+                stage.innerHTML = "<input type='text' id='in' style='padding:10px'><button onclick='check5()'>OK</button>";
+                window.check5 = () => { if(document.getElementById('in').value === "DEIN PASSWORT") win(5); else alert("Falsch! Tip: Es ist DEIN Passwort."); };
+            }
+            else if(lvl === 6) {
+                document.getElementById('instr').innerText = "Klick das X";
+                let ad = document.createElement('div');
+                ad.innerHTML = "WERBUNG<br><br>Schließe mich!";
+                ad.style.cssText = "width:200px; height:200px; background:white; color:black; padding:20px; position:absolute; left:20%;";
+                let x = document.createElement('b'); x.innerText = " X "; x.style.position="absolute"; x.style.top="0"; x.style.right="0";
+                x.onclick = () => { x.style.top = Math.random()*90+"%"; x.style.left = Math.random()*90+"%"; staticX = (window.staticX||0)+1; if(staticX > 4) win(6); };
+                ad.appendChild(x); stage.appendChild(ad);
+            }
+            else if(lvl === 7) {
+                document.getElementById('instr').innerText = "Schüttle den Button!";
+                let b = createBtn("SCHÜTTEL", () => {});
+                let shakes = 0;
+                window.ondevicemotion = () => { shakes++; if(shakes > 50) { window.ondevicemotion=null; win(7); } };
+                b.onclick = () => alert("Nicht klicken, SCHÜTTELN!");
+            }
+            else if(lvl === 8) {
+                document.getElementById('instr').innerText = "Sieg ist oben links!";
+                createBtn("SIEG", () => win(8)).style.cssText = "top:-100px; left:-100px;"; // Button ist außerhalb!
+            }
+            else if(lvl === 9) {
+                document.getElementById('instr').innerText = "Hör auf zu spielen.";
+                createBtn("WEITERSPIELEN", () => { alert("Du kannst nicht aufhören, oder?"); startLevel(9); });
+                // Der Sieg ist der "Menü" Button unten! Er wurde umbenannt.
+                document.querySelector('button[onclick="goBack()"]').innerText = "HIER GEWINNEN";
+                document.querySelector('button[onclick="goBack()"]').onclick = () => { 
+                   document.querySelector('button[onclick="goBack()"]').innerText = "Menü";
+                   document.querySelector('button[onclick="goBack()"]').onclick = goBack;
+                   win(9); 
+                };
+            }
+            else if(lvl === 10) {
+                document.getElementById('instr').innerText = "Der finale Klick.";
+                let b = createBtn("SIEG", () => win(10));
+                b.onmouseover = b.ontouchstart = () => { b.style.left = Math.random()*70+"%"; b.style.top = Math.random()*80+"%"; };
+            }
+            else {
+                document.getElementById('instr').innerText = "Level " + lvl + " wird gerade von Sklaven-Ameisen gebaut. Komm in 100 Jahren wieder.";
+            }
+        }
+
+        function createBtn(txt, cb) {
+            const b = document.createElement('button');
+            b.className = 'target'; b.innerText = txt;
+            b.style.left = "40%"; b.style.top = "40%";
+            b.onclick = () => cb(b);
+            stage.appendChild(b);
+            return b;
+        }
+
+        function win(lvl) {
+            alert("Level " + lvl + " geschafft!");
+            if(lvl === unlocked) unlocked++;
+            goBack();
+        }
+
+        function goBack() {
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('lobby').style.display = 'block';
+            renderMenu();
+        }
+
+        renderMenu();
+    </script>
+</body>
+</html>
